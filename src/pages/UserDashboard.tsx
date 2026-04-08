@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Ticket, Settings, User, LogOut, Camera, Check, Save, CreditCard, ChevronRight, Calendar, MapPin } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ticketService } from '../services/ticketService';
-import TicketModal from './TicketModal';
+import TicketModal from '../components/modals/TicketModal';
 
 interface UserDashboardProps {
   isOpen: boolean;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Ticket, X, Check, Lock, ArrowLeft, Clock } from 'lucide-react';
-import { ticketService } from '../services/ticketService';
+import { ticketService } from '../../services/ticketService';
+import { STADIUM_BLOCKS, TICKET_TIERS } from '../../constants';
 
 interface SeatSelectorProps {
   onSelect: (seatId: string) => void;
@@ -18,23 +19,6 @@ interface Block {
   startAngle: number;
   endAngle: number;
 }
-
-const BLOCKS: Block[] = [
-  { id: 'north', name: 'NORTH PAVILION', color: '#6366f1', tier: 'VIP Pavilion', startAngle: -135, endAngle: -45 },
-  { id: 'jio', name: 'JIO PAVILION', color: '#be185d', tier: 'Premium Tier', startAngle: -45, endAngle: 15 },
-  { id: 'east', name: 'EAST STAND', color: '#7c3aed', tier: 'Standard Stand', startAngle: 15, endAngle: 75 },
-  { id: 'd-block', name: 'D BLOCK', color: '#475569', tier: 'General Stand', startAngle: 75, endAngle: 135 },
-  { id: 'c-block', name: 'C BLOCK', color: '#475569', tier: 'General Stand', startAngle: 135, endAngle: 195 },
-  { id: 'west', name: 'WEST STAND', color: '#0d9488', tier: 'Standard Stand', startAngle: 195, endAngle: 255 },
-  { id: 'g-block', name: 'G BLOCK', color: '#0d9488', tier: 'Premium Tier', startAngle: 255, endAngle: 315 },
-];
-
-const TIERS = [
-  { name: 'VIP Pavilion', color: '#6366f1' },
-  { name: 'Premium Tier', color: '#be185d' },
-  { name: 'Standard Stand', color: '#475569' },
-  { name: 'General Stand', color: '#0d9488' },
-];
 
 export default function SeatSelector({ onSelect, selectedSeat, isEntered, matchId }: SeatSelectorProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,7 +138,7 @@ export default function SeatSelector({ onSelect, selectedSeat, isEntered, matchI
                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Pick a category to filter</p>
                       </div>
                       <div className="space-y-4">
-                        {TIERS.map(tier => (
+                        {TICKET_TIERS.map(tier => (
                           <button
                             key={tier.name}
                             onClick={() => setActiveTier(activeTier === tier.name ? null : tier.name)}
@@ -178,7 +162,7 @@ export default function SeatSelector({ onSelect, selectedSeat, isEntered, matchI
                         <rect x="295" y="250" width="10" height="100" fill="#fbbf24" opacity="0.5" />
                         
                         {/* Blocks */}
-                        {BLOCKS.map(block => {
+                        {STADIUM_BLOCKS.map(block => {
                           const isActive = !activeTier || activeTier === block.tier;
                           return (
                             <g 

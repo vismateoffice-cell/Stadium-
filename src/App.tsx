@@ -1,18 +1,18 @@
 import { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import Stadium from './components/Stadium';
-import Landing from './components/Landing';
-import SeatSelector from './components/SeatSelector';
+import Stadium from './components/features/Stadium';
+import Landing from './pages/Landing';
+import SeatSelector from './components/features/SeatSelector';
 import { useAuth } from './hooks/useAuth';
 import { LogOut, Shield, Ticket as TicketIcon, User as UserIcon, LayoutDashboard, X } from 'lucide-react';
 import { ticketService } from './services/ticketService';
 
-// Lazy load modals
-const AuthModal = lazy(() => import('./components/AuthModal'));
-const TicketModal = lazy(() => import('./components/TicketModal'));
-const AdminPanel = lazy(() => import('./components/AdminPanel'));
-const UserDashboard = lazy(() => import('./components/UserDashboard'));
-const BookingConfirmationModal = lazy(() => import('./components/BookingConfirmationModal'));
+// Lazy load modals and pages
+const AuthModal = lazy(() => import('./components/modals/AuthModal'));
+const TicketModal = lazy(() => import('./components/modals/TicketModal'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const BookingConfirmationModal = lazy(() => import('./components/modals/BookingConfirmationModal'));
 
 export default function App() {
   const [isEntered, setIsEntered] = useState(false);

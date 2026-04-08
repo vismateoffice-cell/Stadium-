@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import { adminService } from '../services/adminService';
 import { ticketService } from '../services/ticketService';
-import ConfirmationDialog from './ui/ConfirmationDialog';
-import MatchFormModal from './MatchFormModal';
+import ConfirmationDialog from '../components/ui/ConfirmationDialog';
+import MatchFormModal from '../components/modals/MatchFormModal';
 
 interface AdminPanelProps {
   isOpen: boolean;
