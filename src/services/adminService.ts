@@ -154,6 +154,17 @@ export const adminService = {
   },
 
   // Seat Management
+  async getAllBlockedSeats() {
+    const locksRef = collection(db, 'seatLocks');
+    const q = query(locksRef, where('userId', '==', 'ADMIN_BLOCKED'));
+    try {
+      const snap = await getDocs(q);
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'seatLocks');
+    }
+  },
+
   async blockSeat(seatId: string, blocked: boolean) {
     const seatRef = doc(db, 'seatLocks', `BLOCKED_${seatId}`);
     try {

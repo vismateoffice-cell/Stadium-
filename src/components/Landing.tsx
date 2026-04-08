@@ -64,8 +64,32 @@ export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: La
     <div className="relative z-10 min-h-screen bg-black text-white overflow-x-hidden">
       {/* Hero Section */}
       <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
+        {/* Dynamic Background Images */}
+        <div className="absolute inset-0 z-0">
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.1, 1],
+              rotate: [0, 1, 0]
+            }}
+            transition={{ 
+              duration: 20, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+            className="absolute inset-0 opacity-40"
+          >
+            <img 
+              src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=1920" 
+              alt="Stadium Background" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black via-black/40 to-black" />
+          </motion.div>
+        </div>
+
         {/* Animated Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-30 z-1">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500 rounded-full blur-[120px] animate-pulse delay-700" />
         </div>
@@ -142,6 +166,131 @@ export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: La
         >
           <ChevronRight size={32} className="rotate-90 text-gray-600" />
         </motion.div>
+      </div>
+
+      {/* Experience Section */}
+      <div className="py-32 px-4 sm:px-8 bg-white/[0.02] border-y border-white/5 relative overflow-hidden">
+        {/* Decorative Background Image */}
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 pointer-events-none">
+          <img 
+            src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=1000" 
+            alt="" 
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <h2 className="text-4xl sm:text-6xl font-black uppercase italic tracking-tighter leading-none">
+                The Most <br />
+                <span className="text-orange-500 text-5xl sm:text-7xl">Immersive</span> <br />
+                Arena Ever Built
+              </h2>
+              <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
+                VPW Stadium isn't just a venue; it's a technological marvel. With 360-degree views, 
+                spatial audio, and a cinematic atmosphere, you'll feel every boundary and hear every cheer 
+                as if you were on the pitch.
+              </p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                  <p className="text-3xl font-black text-orange-500 mb-1">4K</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Visual Fidelity</p>
+                </div>
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                  <p className="text-3xl font-black text-orange-500 mb-1">360°</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Viewing Angles</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="space-y-4"
+              >
+                <div className="rounded-[2rem] overflow-hidden aspect-[3/4] relative group">
+                  <img 
+                    src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800" 
+                    alt="Stadium Detail" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                </div>
+                <div className="rounded-[2rem] overflow-hidden aspect-square relative group">
+                  <img 
+                    src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=800" 
+                    alt="Stadium Crowd" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="space-y-4 pt-12"
+              >
+                <div className="rounded-[2rem] overflow-hidden aspect-square relative group">
+                  <img 
+                    src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=800" 
+                    alt="Stadium Night" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                </div>
+                <div className="rounded-[2rem] overflow-hidden aspect-[3/4] relative group">
+                  <img 
+                    src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&q=80&w=800" 
+                    alt="Stadium Lights" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Atmosphere Section */}
+      <div className="relative h-[60vh] overflow-hidden">
+        <motion.div 
+          style={{ y: '-20%' }}
+          whileInView={{ y: '0%' }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="absolute inset-0"
+        >
+          <img 
+            src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=1920" 
+            alt="Stadium Atmosphere" 
+            className="w-full h-[140%] object-cover"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black" />
+        </motion.div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-5xl sm:text-7xl font-black uppercase italic tracking-tighter text-white drop-shadow-2xl">
+              Feel The <span className="text-orange-500">Energy</span>
+            </h2>
+            <p className="text-xs sm:text-sm font-black uppercase tracking-[0.4em] text-white/60 mt-4">Live from VPW Stadium</p>
+          </div>
+        </div>
       </div>
 
       {/* Matches Section */}

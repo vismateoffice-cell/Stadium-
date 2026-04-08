@@ -44,6 +44,8 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
         result = await adminService.getAllTickets() || [];
       } else if (activeTab === 'matches') {
         result = await ticketService.getMatches() || [];
+      } else if (activeTab === 'seats') {
+        result = await adminService.getAllBlockedSeats() || [];
       }
       setData(result);
     } catch (error) {
@@ -179,10 +181,23 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
   };
 
   const handleBlockSeat = async (seatId: string) => {
-    const block = confirm(`Block seat ${seatId}?`);
-    if (block) {
+    if (!seatId) return;
+    setIsActionLoading(seatId);
+    try {
       await adminService.blockSeat(seatId, true);
-      alert(`Seat ${seatId} blocked.`);
+      loadData();
+    } finally {
+      setIsActionLoading(null);
+    }
+  };
+
+  const handleUnblockSeat = async (seatId: string) => {
+    setIsActionLoading(seatId);
+    try {
+      await adminService.blockSeat(seatId, false);
+      loadData();
+    } finally {
+      setIsActionLoading(null);
     }
   };
 
@@ -448,21 +463,62 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
                       {activeTab === 'seats' && (
                         <div className="space-y-8">
                           <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-8">
-                            <h4 className="text-sm font-black uppercase tracking-widest text-orange-500 mb-6">Seat Management</h4>
+                            <h4 className="text-sm font-black uppercase tracking-widest text-orange-500 mb-6">Block New Seat</h4>
                             <div className="flex gap-4">
                               <input 
+                                id="seat-input"
                                 type="text" 
                                 placeholder="Enter Seat ID (e.g. north-A1)" 
                                 className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 px-6 text-sm font-medium focus:outline-none focus:border-orange-500/50"
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleBlockSeat((e.target as HTMLInputElement).value);
+                                  if (e.key === 'Enter') {
+                                    handleBlockSeat((e.target as HTMLInputElement).value);
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
                                 }}
                               />
-                              <button className="bg-white text-black px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all">
+                              <button 
+                                onClick={() => {
+                                  const input = document.getElementById('seat-input') as HTMLInputElement;
+                                  handleBlockSeat(input.value);
+                                  input.value = '';
+                                }}
+                                className="bg-white text-black px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all"
+                              >
                                 Block Seat
                               </button>
                             </div>
-                            <p className="text-[10px] text-gray-500 mt-4 font-medium uppercase tracking-widest">Type seat ID and press enter to block/unblock</p>
+                            <p className="text-[10px] text-gray-500 mt-4 font-medium uppercase tracking-widest">Type seat ID and press enter to block from booking</p>
+                          </div>
+
+                          <div className="space-y-4">
+                            <h4 className="text-sm font-black uppercase tracking-widest text-white mb-4">Currently Blocked Seats</h4>
+                            {filteredData.length > 0 ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredData.map((seat) => (
+                                  <div key={seat.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-white/10 transition-all">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500">
+                                        <Ban size={14} />
+                                      </div>
+                                      <span className="text-xs font-black uppercase tracking-widest text-white">{seat.seatId}</span>
+                                    </div>
+                                    <button 
+                                      onClick={() => handleUnblockSeat(seat.seatId)}
+                                      disabled={isActionLoading === seat.seatId}
+                                      className="p-2 text-gray-600 hover:text-green-500 transition-colors"
+                                      title="Unblock Seat"
+                                    >
+                                      <Unlock size={16} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">No seats are currently blocked</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -473,7 +529,16 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
                         <Search size={32} className="text-gray-700" />
                       </div>
                       <p className="text-gray-500 font-bold uppercase tracking-widest mb-2">No results found</p>
-                      <p className="text-xs text-gray-600 max-w-xs">Try adjusting your search or filter to find what you're looking for.</p>
+                      <p className="text-xs text-gray-600 max-w-xs mb-6">Try adjusting your search or filter to find what you're looking for.</p>
+                      {activeTab === 'matches' && (
+                        <button 
+                          onClick={handleAddMatch}
+                          className="bg-orange-500 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-orange-600 transition-all"
+                        >
+                          <Plus size={14} />
+                          Create First Match
+                        </button>
+                      )}
                     </div>
                   )}
 
