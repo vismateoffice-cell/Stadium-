@@ -8,9 +8,10 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserProfile } from '../types';
 
@@ -27,8 +28,17 @@ export function useAuth() {
         // Sync profile with Firestore in background
         const profileRef = doc(db, 'users', firebaseUser.uid);
         getDoc(profileRef).then((profileSnap) => {
+          const isVerified = firebaseUser.emailVerified || firebaseUser.providerData[0]?.providerId === 'google.com';
+          
           if (profileSnap.exists()) {
-            setProfile(profileSnap.data() as UserProfile);
+            const currentProfile = profileSnap.data() as UserProfile;
+            // Update verification status if it changed in Firebase Auth
+            if (isVerified && !currentProfile.isVerified) {
+              updateDoc(profileRef, { isVerified: true });
+              setProfile({ ...currentProfile, isVerified: true });
+            } else {
+              setProfile(currentProfile);
+            }
           } else {
             // Create new profile
             const newProfile: UserProfile = {
@@ -38,7 +48,7 @@ export function useAuth() {
               photoURL: firebaseUser.photoURL,
               role: firebaseUser.email === 'vismateoffice@gmail.com' ? 'admin' : 'user',
               createdAt: serverTimestamp(),
-              isVerified: firebaseUser.providerData[0]?.providerId === 'google.com',
+              isVerified: isVerified,
               isBlocked: false
             };
             setDoc(profileRef, newProfile).then(() => {
@@ -83,8 +93,9 @@ export function useAuth() {
       const { user: newUser } = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(newUser, { displayName: name });
       
-      // Generate mock OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      // Send native Firebase email verification link
+      await sendEmailVerification(newUser);
+      
       const profileRef = doc(db, 'users', newUser.uid);
       await setDoc(profileRef, {
         uid: newUser.uid,
@@ -94,24 +105,38 @@ export function useAuth() {
         role: email === 'vismateoffice@gmail.com' ? 'admin' : 'user',
         createdAt: serverTimestamp(),
         isVerified: false,
-        verificationCode: otp
+        isBlocked: false
+      });
+
+      // Trigger Welcome Email via Firestore
+      await addDoc(collection(db, 'mail'), {
+        to: email,
+        message: {
+          subject: 'Welcome to VPW Stadium!',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #000; color: #fff; border-radius: 24px;">
+              <h1 style="font-size: 48px; line-height: 0.9; text-transform: uppercase; font-style: italic; margin-bottom: 24px;">Welcome to <span style="color: #f97316;">VPW</span></h1>
+              <p style="font-size: 18px; color: #888; margin-bottom: 32px;">Hello ${name}, your journey to the ultimate stadium experience starts here.</p>
+              <div style="border-top: 1px solid #333; padding-top: 32px;">
+                <p style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #f97316; margin-bottom: 8px;">Next Step</p>
+                <p style="font-size: 16px; margin-bottom: 24px;">Please verify your email using the link we just sent you to unlock full access to ticket bookings.</p>
+              </div>
+              <p style="font-size: 12px; color: #444; margin-top: 40px;">VPW Stadium - The Future of Cricket</p>
+            </div>
+          `
+        },
+        status: { state: 'PENDING' }
       });
       
-      // In a real app, you'd send this via email service
-      console.log(`[MOCK EMAIL] OTP for ${email}: ${otp}`);
-      alert(`[MOCK EMAIL] Your verification code is: ${otp}`);
     } catch (error) {
       console.error('Sign up error:', error);
       throw error;
     }
   };
 
-  const verifyOTP = async (code: string) => {
-    if (!user || !profile) return false;
-    if (code === profile.verificationCode) {
-      const profileRef = doc(db, 'users', user.uid);
-      await updateDoc(profileRef, { isVerified: true });
-      setProfile(prev => prev ? { ...prev, isVerified: true } : null);
+  const resendVerificationEmail = async () => {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
       return true;
     }
     return false;
@@ -157,7 +182,7 @@ export function useAuth() {
     loginWithGoogle,
     loginWithEmail,
     signUpWithEmail,
-    verifyOTP,
+    resendVerificationEmail,
     resetPassword,
     updateUserSettings,
     logout,

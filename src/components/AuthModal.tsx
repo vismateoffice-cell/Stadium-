@@ -19,9 +19,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [otp, setOtp] = useState('');
 
-  const { loginWithGoogle, loginWithEmail, signUpWithEmail, resetPassword, verifyOTP } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signUpWithEmail, resetPassword, resendVerificationEmail } = useAuth();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -56,7 +55,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
     setError(null);
     try {
       await signUpWithEmail(email, password, name);
-      setView('otp');
+      setView('otp'); // Reusing 'otp' view name for the verification message
     } catch (err: any) {
       setError(err.message || 'Sign up failed');
     } finally {
@@ -64,19 +63,14 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleResendLink = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const success = await verifyOTP(otp);
-      if (success) {
-        onLogin();
-      } else {
-        setError('Invalid verification code');
-      }
+      await resendVerificationEmail();
+      setError('Verification link resent! Please check your inbox.');
     } catch (err: any) {
-      setError(err.message || 'Verification failed');
+      setError(err.message || 'Failed to resend link');
     } finally {
       setIsLoading(false);
     }
@@ -139,14 +133,14 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                   {view === 'login' && 'Sign In'}
                   {view === 'signup' && 'Create Account'}
                   {view === 'reset' && 'Reset Password'}
-                  {view === 'otp' && 'Verify Email'}
+                  {view === 'otp' && 'Check Your Email'}
                 </h2>
                 <p className="text-gray-400 font-medium text-sm">
                   {view === 'initial' && 'Secure your place in history.'}
                   {view === 'login' && 'Enter your credentials to continue.'}
                   {view === 'signup' && 'Join the stadium experience.'}
                   {view === 'reset' && 'We\'ll send a link to your email.'}
-                  {view === 'otp' && `Enter the 6-digit code sent to ${email}`}
+                  {view === 'otp' && `We've sent a verification link to ${email}. Click the link in the email to verify your account.`}
                 </p>
               </div>
 
@@ -255,31 +249,28 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
                 )}
 
                 {view === 'otp' && (
-                  <form onSubmit={handleVerifyOTP} className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="6-Digit Code"
-                      required
-                      maxLength={6}
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-center text-2xl font-black tracking-[0.5em] focus:outline-none focus:border-orange-500/50 transition-all"
-                    />
+                  <div className="space-y-4">
+                    <div className="bg-orange-500/5 border border-orange-500/10 p-6 rounded-2xl text-center">
+                      <Mail size={32} className="text-orange-500 mx-auto mb-4" />
+                      <p className="text-xs text-gray-400 leading-relaxed uppercase font-black tracking-widest">
+                        Once you verify your email, you will be automatically logged in.
+                      </p>
+                    </div>
                     <button
-                      type="submit"
+                      onClick={handleResendLink}
                       disabled={isLoading}
                       className="w-full bg-orange-500 text-white py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-orange-600 transition-all disabled:opacity-50"
                     >
-                      {isLoading ? 'Verifying...' : 'Verify & Continue'}
+                      {isLoading ? 'Sending...' : 'Resend Verification Link'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setView('signup')}
+                      onClick={() => setView('login')}
                       className="w-full text-gray-500 hover:text-white py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
                     >
-                      Wrong email? Go back
+                      Already verified? Sign In
                     </button>
-                  </form>
+                  </div>
                 )}
 
                 {view === 'reset' && (

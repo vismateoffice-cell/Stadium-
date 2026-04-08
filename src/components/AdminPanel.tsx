@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { adminService } from '../services/adminService';
 import { ticketService } from '../services/ticketService';
+import ConfirmationDialog from './ui/ConfirmationDialog';
+import MatchFormModal from './MatchFormModal';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -23,6 +25,25 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: 'danger' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'info'
+  });
+  const [matchForm, setMatchForm] = useState<{
+    isOpen: boolean;
+    initialData?: any;
+  }>({
+    isOpen: false
+  });
 
   useEffect(() => {
     if (isOpen && isAdmin) {
@@ -55,97 +76,89 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
     }
   };
 
-  const handleAddMatch = async () => {
-    const title = prompt('Enter Match Title (e.g. IND vs AUS)');
-    if (!title) return;
-    const type = prompt('Enter Match Type (e.g. T20, ODI, Test)', 'T20');
-    const price = Number(prompt('Enter Price', '0'));
-    const venue = prompt('Enter Venue', 'VPW Stadium, Mumbai');
-    const dateStr = prompt('Enter Date (YYYY-MM-DD)', '2026-11-15');
-    
-    if (title && venue && dateStr) {
-      setIsLoading(true);
-      try {
-        const [teamA, teamB] = title.split(' vs ');
-        await adminService.addMatch({
-          title,
-          type,
-          price,
-          venue,
-          date: new Date(dateStr).toISOString(),
-          teams: { teamA: teamA || 'Team A', teamB: teamB || 'Team B' }
-        });
-        loadData();
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const handleAddMatch = () => {
+    setMatchForm({ isOpen: true });
   };
 
-  const handleEditMatch = async (match: any) => {
-    const title = prompt('Edit Match Title', match.title);
-    if (!title) return;
-    const type = prompt('Edit Match Type', match.type || 'T20');
-    const price = Number(prompt('Edit Price', match.price || '0'));
-    const venue = prompt('Edit Venue', match.venue || 'VPW Stadium, Mumbai');
-    const dateStr = prompt('Edit Date (YYYY-MM-DD)', match.date?.seconds ? new Date(match.date.seconds * 1000).toISOString().split('T')[0] : new Date(match.date).toISOString().split('T')[0]);
-    
-    if (title && venue && dateStr) {
-      setIsLoading(true);
-      try {
-        const [teamA, teamB] = title.split(' vs ');
-        await adminService.updateMatch(match.id, {
-          title,
-          type,
-          price,
-          venue,
-          date: new Date(dateStr).toISOString(),
-          teams: { teamA: teamA || 'Team A', teamB: teamB || 'Team B' }
-        });
-        loadData();
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const handleEditMatch = (match: any) => {
+    setMatchForm({ isOpen: true, initialData: match });
   };
 
-  const handleDeleteMatch = async (matchId: string) => {
-    if (!confirm('Are you sure you want to delete this match?')) return;
-    setIsActionLoading(matchId);
-    try {
-      await adminService.deleteMatch(matchId);
-      loadData();
-    } finally {
-      setIsActionLoading(null);
-    }
-  };
-
-  const handleGenerateMockMatches = async () => {
-    if (!confirm('Generate 30 mock matches?')) return;
+  const handleSaveMatch = async (formData: any) => {
     setIsLoading(true);
     try {
-      const teams = ['IND', 'AUS', 'ENG', 'PAK', 'NZ', 'SA', 'WI', 'SL', 'AFG', 'BAN'];
-      for (let i = 0; i < 30; i++) {
-        const t1 = teams[Math.floor(Math.random() * teams.length)];
-        let t2 = teams[Math.floor(Math.random() * teams.length)];
-        while (t1 === t2) t2 = teams[Math.floor(Math.random() * teams.length)];
-        
-        const date = new Date();
-        date.setDate(date.getDate() + i + 1);
-        
-        await adminService.addMatch({
-          title: `${t1} vs ${t2}`,
-          type: ['T20', 'ODI', 'Test'][Math.floor(Math.random() * 3)],
-          price: [0, 500, 1000, 2500][Math.floor(Math.random() * 4)],
-          venue: 'VPW Stadium, Mumbai',
-          date: date.toISOString(),
-          teams: { teamA: t1, teamB: t2 }
-        });
+      const [teamA, teamB] = formData.title.split(' vs ');
+      const matchData = {
+        ...formData,
+        date: new Date(formData.date).toISOString(),
+        teams: { teamA: teamA || 'Team A', teamB: teamB || 'Team B' }
+      };
+
+      if (matchForm.initialData) {
+        await adminService.updateMatch(matchForm.initialData.id, matchData);
+      } else {
+        await adminService.addMatch(matchData);
       }
+      setMatchForm({ isOpen: false });
       loadData();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteMatch = (matchId: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Match',
+      message: 'Are you sure you want to delete this match? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        setIsActionLoading(matchId);
+        try {
+          await adminService.deleteMatch(matchId);
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          loadData();
+        } finally {
+          setIsActionLoading(null);
+        }
+      }
+    });
+  };
+
+  const handleGenerateMockMatches = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Generate Matches',
+      message: 'Generate 30 mock matches for testing?',
+      type: 'info',
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          const teams = ['IND', 'AUS', 'ENG', 'PAK', 'NZ', 'SA', 'WI', 'SL', 'AFG', 'BAN'];
+          for (let i = 0; i < 30; i++) {
+            const t1 = teams[Math.floor(Math.random() * teams.length)];
+            let t2 = teams[Math.floor(Math.random() * teams.length)];
+            while (t1 === t2) t2 = teams[Math.floor(Math.random() * teams.length)];
+            
+            const date = new Date();
+            date.setDate(date.getDate() + i + 1);
+            
+            await adminService.addMatch({
+              title: `${t1} vs ${t2}`,
+              type: ['T20', 'ODI', 'Test'][Math.floor(Math.random() * 3)],
+              price: [0, 500, 1000, 2500][Math.floor(Math.random() * 4)],
+              venue: 'VPW Stadium, Mumbai',
+              date: date.toISOString(),
+              teams: { teamA: t1, teamB: t2 }
+            });
+          }
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          loadData();
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   const handleToggleLive = async (matchId: string, currentStatus: string) => {
@@ -169,15 +182,23 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
     }
   };
 
-  const handleCancelTicket = async (ticketId: string) => {
-    if (!confirm('Are you sure you want to cancel this ticket?')) return;
-    setIsActionLoading(ticketId);
-    try {
-      await adminService.cancelTicket(ticketId);
-      loadData();
-    } finally {
-      setIsActionLoading(null);
-    }
+  const handleCancelTicket = (ticketId: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Cancel Ticket',
+      message: 'Are you sure you want to cancel this ticket?',
+      type: 'danger',
+      onConfirm: async () => {
+        setIsActionLoading(ticketId);
+        try {
+          await adminService.cancelTicket(ticketId);
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          loadData();
+        } finally {
+          setIsActionLoading(null);
+        }
+      }
+    });
   };
 
   const handleBlockSeat = async (seatId: string) => {
@@ -590,6 +611,24 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
           </motion.div>
         </motion.div>
       )}
+
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        isLoading={isLoading || !!isActionLoading}
+      />
+
+      <MatchFormModal
+        isOpen={matchForm.isOpen}
+        onClose={() => setMatchForm({ isOpen: false })}
+        onSave={handleSaveMatch}
+        initialData={matchForm.initialData}
+        isLoading={isLoading}
+      />
     </AnimatePresence>
   );
 }

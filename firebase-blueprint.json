@@ -62,6 +62,29 @@
         "expiresAt": { "type": "string", "format": "date-time" }
       },
       "required": ["seatId", "userId", "expiresAt"]
+    },
+    "Mail": {
+      "title": "Mail",
+      "description": "Email trigger document for Firebase Trigger Email extension",
+      "type": "object",
+      "properties": {
+        "to": { "type": "string" },
+        "message": {
+          "type": "object",
+          "properties": {
+            "subject": { "type": "string" },
+            "html": { "type": "string" }
+          }
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "state": { "type": "string", "enum": ["PENDING", "PROCESSING", "SUCCESS", "ERROR"] },
+            "error": { "type": "string" }
+          }
+        }
+      },
+      "required": ["to", "message"]
     }
   },
   "firestore": {
@@ -80,6 +103,10 @@
     "/seatLocks/{lockId}": {
       "schema": "SeatLock",
       "description": "Seat locks collection"
+    },
+    "/mail/{mailId}": {
+      "schema": "Mail",
+      "description": "Email trigger collection"
     }
   }
 }

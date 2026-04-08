@@ -1,9 +1,10 @@
 import { useState, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import Stadium from './components/Stadium';
 import Landing from './components/Landing';
 import SeatSelector from './components/SeatSelector';
 import { useAuth } from './hooks/useAuth';
-import { LogOut, Shield, Ticket as TicketIcon, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { LogOut, Shield, Ticket as TicketIcon, User as UserIcon, LayoutDashboard, X } from 'lucide-react';
 import { ticketService } from './services/ticketService';
 
 // Lazy load modals
@@ -11,6 +12,7 @@ const AuthModal = lazy(() => import('./components/AuthModal'));
 const TicketModal = lazy(() => import('./components/TicketModal'));
 const AdminPanel = lazy(() => import('./components/AdminPanel'));
 const UserDashboard = lazy(() => import('./components/UserDashboard'));
+const BookingConfirmationModal = lazy(() => import('./components/BookingConfirmationModal'));
 
 export default function App() {
   const [isEntered, setIsEntered] = useState(false);
@@ -18,10 +20,13 @@ export default function App() {
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [adminTab, setAdminTab] = useState<'users' | 'tickets' | 'matches' | 'seats' | 'settings'>('users');
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [currentTicket, setCurrentTicket] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { user, profile, logout, isAdmin, loading } = useAuth();
 
@@ -30,41 +35,58 @@ export default function App() {
     setIsEntered(true);
   };
 
-  const handleSeatSelect = async (seatId: string) => {
+  const handleSeatSelect = (seatId: string) => {
     setSelectedSeat(seatId);
     if (!user) {
       setIsAuthModalOpen(true);
-    } else if (isAdmin) {
-      alert('Admins are not allowed to book tickets. Please use the Admin Panel to manage matches.');
       return;
-    } else if (profile?.isBlocked) {
-      alert('Your account has been blocked. Please contact support.');
-    } else if (profile && !profile.isVerified && profile.role !== 'admin') {
-      alert('Please verify your email to book tickets.');
+    }
+    
+    if (isAdmin) {
+      setErrorMessage('Admins are not allowed to book tickets. Please use the Admin Panel.');
+      return;
+    }
+    
+    if (profile?.isBlocked) {
+      setErrorMessage('Your account has been blocked. Please contact support.');
+      return;
+    }
+    
+    if (profile && !profile.isVerified && profile.role !== 'admin') {
+      setErrorMessage('Please verify your email to book tickets.');
       setIsAuthModalOpen(true);
-    } else {
-      // Direct "0 rupee" payment flow
-      const confirmBooking = confirm(`Confirm booking for ${selectedMatch?.title || 'Match'} at seat ${seatId}? (Price: ₹0)`);
-      if (confirmBooking) {
-        try {
-          const matchId = selectedMatch?.id || 'FINAL-2026';
-          const ticketId = await ticketService.confirmTicket(seatId, user.uid, matchId);
-          const newTicket = {
-            id: ticketId,
-            seatId: seatId,
-            matchId: matchId,
-            status: 'approved'
-          };
-          setCurrentTicket(newTicket);
-          setIsTicketModalOpen(true);
-          
-          // Simulate email notification
-          console.log(`[MOCK EMAIL] Payment Successful! Ticket for ${matchId} at seat ${seatId} is confirmed. Here is your ticket ID: ${ticketId}`);
-          alert(`Payment Successful! Your ticket for ${selectedMatch?.title || 'the match'} has been confirmed. A confirmation email has been sent to ${user.email}.`);
-        } catch (error) {
-          console.error('Failed to book ticket:', error);
-        }
-      }
+      return;
+    }
+
+    setIsBookingModalOpen(true);
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!user || !selectedSeat) return;
+    
+    setIsBookingLoading(true);
+    try {
+      const matchId = selectedMatch?.id || 'FINAL-2026';
+      const ticketId = await ticketService.confirmTicket(selectedSeat, user.uid, matchId);
+      
+      const newTicket = {
+        id: ticketId,
+        seatId: selectedSeat,
+        matchId: matchId,
+        status: 'approved'
+      };
+      
+      setCurrentTicket(newTicket);
+      setIsBookingModalOpen(false);
+      setIsTicketModalOpen(true);
+      
+      // Simulate email notification
+      console.log(`[MOCK EMAIL] Payment Successful! Ticket for ${matchId} at seat ${selectedSeat} is confirmed. Here is your ticket ID: ${ticketId}`);
+    } catch (error) {
+      console.error('Failed to book ticket:', error);
+      setErrorMessage('Failed to process booking. Please try again.');
+    } finally {
+      setIsBookingLoading(false);
     }
   };
 
@@ -210,7 +232,34 @@ export default function App() {
           isOpen={isDashboardOpen} 
           onClose={() => setIsDashboardOpen(false)} 
         />
+
+        <BookingConfirmationModal
+          isOpen={isBookingModalOpen}
+          onClose={() => setIsBookingModalOpen(false)}
+          onConfirm={handleConfirmBooking}
+          matchTitle={selectedMatch?.title || 'Match'}
+          seatId={selectedSeat || ''}
+          price={selectedMatch?.price || 0}
+          isLoading={isBookingLoading}
+        />
       </Suspense>
+
+      {/* Error Toast */}
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[300] bg-red-500 text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-[10px] shadow-2xl flex items-center gap-3"
+          >
+            <span>{errorMessage}</span>
+            <button onClick={() => setErrorMessage(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Loading Overlay */}
       {loading && (

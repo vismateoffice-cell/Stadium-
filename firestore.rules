@@ -38,11 +38,13 @@ service cloud.firestore {
     //   - createdAt: timestamp (optional)
     //   - updatedAt: timestamp (optional)
     //
-    // Collection: seatLocks
+    // Collection: mail
     // Fields:
-    //   - seatId: string (required)
-    //   - userId: string (required)
-    //   - expiresAt: timestamp (required)
+    //   - to: string (required)
+    //   - message: map (required)
+    //     - subject: string (required)
+    //     - html: string (required)
+    //   - status: map (optional)
     //
     // ===============================================================
 
@@ -93,6 +95,14 @@ service cloud.firestore {
              data.updatedAt is timestamp;
     }
 
+    function isValidMail(data) {
+      return hasOnlyAllowedFields(['to', 'message', 'status']) &&
+             data.to is string &&
+             data.message is map &&
+             data.message.subject is string &&
+             data.message.html is string;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -120,6 +130,12 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
       allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /mail/{mailId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidMail(request.resource.data);
+      allow update, delete: if isAdmin();
     }
   }
 }
