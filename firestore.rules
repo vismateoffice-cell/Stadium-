@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required, email format)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional, uri format)
+    //   - role: string (required, ['user', 'admin'])
+    //   - isBlocked: boolean (optional)
+    //   - isVerified: boolean (optional)
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (optional)
+    //
+    // Collection: tickets
+    // Fields:
+    //   - id: string (optional)
+    //   - userId: string (required)
+    //   - matchId: string (required)
+    //   - seatId: string (required)
+    //   - status: string (required, ['selected', 'confirmed', 'approved'])
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: matches
+    // Fields:
+    //   - id: string (optional)
+    //   - title: string (required)
+    //   - date: timestamp (required)
+    //   - venue: string (required)
+    //   - teams: map (optional)
+    //   - status: string (optional)
+    //   - createdAt: timestamp (optional)
+    //   - updatedAt: timestamp (optional)
+    //
+    // Collection: seatLocks
+    // Fields:
+    //   - seatId: string (required)
+    //   - userId: string (required)
+    //   - expiresAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email == "vismateoffice@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'displayName', 'photoURL', 'role', 'isBlocked', 'isVerified', 'verificationCode', 'createdAt', 'updatedAt']) &&
+             (isAdmin() || data.uid == request.auth.uid) &&
+             isValidEmail(data.email) &&
+             data.role in ['user', 'admin'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTicket(data) {
+      return hasOnlyAllowedFields(['id', 'userId', 'matchId', 'seatId', 'status', 'createdAt', 'updatedAt']) &&
+             (isAdmin() || data.userId == request.auth.uid) &&
+             data.status in ['selected', 'confirmed', 'approved'] &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin())) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidTicket(request.resource.data);
+      allow update: if (isAuthenticated() && (resource.data.userId == request.auth.uid) && isValidTicket(request.resource.data)) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /seatLocks/{lockId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}

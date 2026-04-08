@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information and role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "A generated seat pass for a match",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "matchId": { "type": "string" },
+        "seatId": { "type": "string" },
+        "status": { "type": "string", "enum": ["selected", "confirmed", "approved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "matchId", "seatId", "status"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Cricket match details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "venue": { "type": "string" },
+        "price": { "type": "number", "description": "Ticket price in INR" },
+        "status": { "type": "string", "enum": ["active", "cancelled", "completed"] },
+        "type": { "type": "string", "description": "Match type e.g. T20, ODI, Test" },
+        "teams": {
+          "type": "object",
+          "properties": {
+            "teamA": { "type": "string" },
+            "teamB": { "type": "string" }
+          }
+        }
+      },
+      "required": ["title", "date", "venue", "price"]
+    },
+    "SeatLock": {
+      "title": "SeatLock",
+      "description": "Temporary lock on a seat to prevent double booking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "seatId": { "type": "string" },
+        "userId": { "type": "string" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["seatId", "userId", "expiresAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile collection"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Matches collection"
+    },
+    "/tickets/{ticketId}": {
+      "schema": "Ticket",
+      "description": "Tickets collection"
+    },
+    "/seatLocks/{lockId}": {
+      "schema": "SeatLock",
+      "description": "Seat locks collection"
+    }
+  }
+}
