@@ -26,7 +26,7 @@ export interface Match {
   date: any;
   venue: string;
   price: number;
-  status: 'active' | 'cancelled' | 'completed';
+  status: 'active' | 'cancelled' | 'completed' | 'live';
   type: string;
   teams: {
     teamA: string;

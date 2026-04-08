@@ -50,6 +50,18 @@ export const adminService = {
     }
   },
 
+  async toggleLiveMatch(matchId: string, isLive: boolean) {
+    const matchRef = doc(db, 'matches', matchId);
+    try {
+      await updateDoc(matchRef, { 
+        status: isLive ? 'live' : 'active',
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `matches/${matchId}`);
+    }
+  },
+
   async generateMockMatches(count: number = 30) {
     const teams = ['IND', 'AUS', 'ENG', 'PAK', 'NZ', 'SA', 'WI', 'SL', 'AFG', 'BAN'];
     const types = ['T20', 'ODI', 'Test'];

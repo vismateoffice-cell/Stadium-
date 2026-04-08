@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Users, Ticket, Settings, ShieldCheck, Search, Trash2, 
   CheckCircle, AlertCircle, Plus, Ban, Calendar, MapPin, 
-  Trash, RefreshCw, Lock, Unlock, Trophy
+  Trash, RefreshCw, Lock, Unlock, Trophy, Radio
 } from 'lucide-react';
 import { adminService } from '../services/adminService';
 import { ticketService } from '../services/ticketService';
@@ -111,6 +111,17 @@ export default function AdminPanel({ isOpen, onClose, isAdmin }: AdminPanelProps
       loadData();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleLive = async (matchId: string, currentStatus: string) => {
+    const isLive = currentStatus === 'live';
+    setIsActionLoading(matchId);
+    try {
+      await adminService.toggleLiveMatch(matchId, !isLive);
+      loadData();
+    } finally {
+      setIsActionLoading(null);
     }
   };
 
@@ -364,18 +375,32 @@ export default function AdminPanel({ isOpen, onClose, isAdmin }: AdminPanelProps
                           <div className="flex items-center gap-6">
                             <div className="text-right">
                               <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Status</p>
-                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${match.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-green-500/10 text-green-500 border-green-500/20'}`}>
+                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                match.status === 'live' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
+                                match.status === 'cancelled' ? 'bg-gray-500/10 text-gray-500 border-gray-500/20' : 
+                                'bg-green-500/10 text-green-500 border-green-500/20'
+                              }`}>
                                 {match.status}
                               </span>
                             </div>
-                            <button 
-                              onClick={() => handleDeleteMatch(match.id)}
-                              disabled={isActionLoading === match.id}
-                              className="p-2 text-gray-600 hover:text-red-500 transition-colors" 
-                              title="Delete Match"
-                            >
-                              <Trash size={18} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => handleToggleLive(match.id, match.status)}
+                                disabled={isActionLoading === match.id}
+                                className={`p-2 transition-colors ${match.status === 'live' ? 'text-red-500 hover:text-red-400' : 'text-gray-600 hover:text-orange-500'}`}
+                                title={match.status === 'live' ? 'End Live' : 'Go Live'}
+                              >
+                                <Radio size={18} className={match.status === 'live' ? 'animate-pulse' : ''} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteMatch(match.id)}
+                                disabled={isActionLoading === match.id}
+                                className="p-2 text-gray-600 hover:text-red-500 transition-colors" 
+                                title="Delete Match"
+                              >
+                                <Trash size={18} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}

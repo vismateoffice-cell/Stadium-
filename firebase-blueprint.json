@@ -39,7 +39,7 @@
         "date": { "type": "string", "format": "date-time" },
         "venue": { "type": "string" },
         "price": { "type": "number", "description": "Ticket price in INR" },
-        "status": { "type": "string", "enum": ["active", "cancelled", "completed"] },
+        "status": { "type": "string", "enum": ["active", "cancelled", "completed", "live"] },
         "type": { "type": "string", "description": "Match type e.g. T20, ODI, Test" },
         "teams": {
           "type": "object",

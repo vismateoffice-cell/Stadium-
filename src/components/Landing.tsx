@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Ticket, Users, MapPin, Calendar, ChevronRight, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Trophy, Ticket, Users, MapPin, Calendar, ChevronRight, Search, Filter, ArrowUpDown, Shield, Radio } from 'lucide-react';
 import { ticketService } from '../services/ticketService';
 import { adminService } from '../services/adminService';
 import { Match } from '../types';
@@ -8,9 +8,11 @@ import { Match } from '../types';
 interface LandingProps {
   onEnter: (match?: Match) => void;
   isEntered: boolean;
+  isAdmin?: boolean;
+  onOpenAdmin?: () => void;
 }
 
-export default function Landing({ onEnter, isEntered }: LandingProps) {
+export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: LandingProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,17 +107,31 @@ export default function Landing({ onEnter, isEntered }: LandingProps) {
             </div>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(249,115,22,0.4)" }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              const element = document.getElementById('matches-section');
-              element?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="bg-orange-500 text-white px-16 py-5 rounded-full font-black text-xl tracking-widest uppercase italic shadow-2xl transition-all"
-          >
-            Book Tickets
-          </motion.button>
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(249,115,22,0.4)" }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const element = document.getElementById('matches-section');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-orange-500 text-white px-12 sm:px-16 py-5 rounded-full font-black text-lg sm:text-xl tracking-widest uppercase italic shadow-2xl transition-all"
+            >
+              Book Tickets
+            </motion.button>
+
+            {isAdmin && (
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(255,255,255,0.1)" }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onOpenAdmin}
+                className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-12 sm:px-16 py-5 rounded-full font-black text-lg sm:text-xl tracking-widest uppercase italic transition-all flex items-center gap-3"
+              >
+                <Shield size={20} />
+                Admin Panel
+              </motion.button>
+            )}
+          </div>
         </motion.div>
 
         <motion.div 
@@ -188,8 +204,16 @@ export default function Landing({ onEnter, isEntered }: LandingProps) {
               >
                 <div className="p-8">
                   <div className="flex justify-between items-start mb-8">
-                    <div className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-full">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">{match.type || 'T20 Match'}</span>
+                    <div className="flex flex-col gap-2">
+                      <div className="px-4 py-1.5 bg-orange-500/10 border border-orange-500/20 rounded-full w-fit">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">{match.type || 'T20 Match'}</span>
+                      </div>
+                      {match.status === 'live' && (
+                        <div className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full w-fit flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Live Now</span>
+                        </div>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Price From</p>

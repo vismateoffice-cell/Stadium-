@@ -152,7 +152,12 @@ export default function App() {
       )}
 
       {/* Main Content */}
-      <Landing onEnter={handleEnter} isEntered={isEntered} />
+      <Landing 
+        onEnter={handleEnter} 
+        isEntered={isEntered} 
+        isAdmin={isAdmin}
+        onOpenAdmin={() => setIsAdminPanelOpen(true)}
+      />
       
       <SeatSelector 
         isEntered={isEntered} 
