@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Ticket, Users, MapPin, Calendar, ChevronRight, Search, Filter, ArrowUpDown, Shield, Radio } from 'lucide-react';
+import { Trophy, Ticket, Users, MapPin, Calendar, ChevronRight, Search, Filter, ArrowUpDown, Shield, Radio, Settings, Plus } from 'lucide-react';
 import { ticketService } from '../services/ticketService';
 import { adminService } from '../services/adminService';
 import { Match } from '../types';
@@ -9,7 +9,7 @@ interface LandingProps {
   onEnter: (match?: Match) => void;
   isEntered: boolean;
   isAdmin?: boolean;
-  onOpenAdmin?: () => void;
+  onOpenAdmin?: (tab?: 'users' | 'tickets' | 'matches' | 'seats' | 'settings') => void;
 }
 
 export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: LandingProps) {
@@ -124,7 +124,7 @@ export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: La
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(255,255,255,0.1)" }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onOpenAdmin}
+                onClick={() => onOpenAdmin?.('matches')}
                 className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-12 sm:px-16 py-5 rounded-full font-black text-lg sm:text-xl tracking-widest uppercase italic transition-all flex items-center gap-3"
               >
                 <Shield size={20} />
@@ -153,6 +153,15 @@ export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: La
           </div>
 
           <div className="flex flex-wrap gap-4 w-full md:w-auto">
+            {isAdmin && (
+              <button 
+                onClick={() => onOpenAdmin?.('matches')}
+                className="bg-orange-500 text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
+              >
+                <Plus size={18} />
+                Add Match
+              </button>
+            )}
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
               <input 
@@ -246,11 +255,24 @@ export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: La
                   </div>
 
                   <button 
-                    onClick={() => onEnter(match)}
-                    className="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-xs group-hover:bg-orange-500 group-hover:text-white transition-all flex items-center justify-center gap-2"
+                    onClick={() => isAdmin ? onOpenAdmin?.('matches') : onEnter(match)}
+                    className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 ${
+                      isAdmin 
+                        ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20 hover:bg-orange-500 hover:text-white' 
+                        : 'bg-white text-black group-hover:bg-orange-500 group-hover:text-white'
+                    }`}
                   >
-                    Enter Stadium
-                    <ChevronRight size={16} />
+                    {isAdmin ? (
+                      <>
+                        <Settings size={16} />
+                        Edit Match
+                      </>
+                    ) : (
+                      <>
+                        Enter Stadium
+                        <ChevronRight size={16} />
+                      </>
+                    )}
                   </button>
                 </div>
                 

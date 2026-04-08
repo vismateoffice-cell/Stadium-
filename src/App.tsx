@@ -19,6 +19,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const [adminTab, setAdminTab] = useState<'users' | 'tickets' | 'matches' | 'seats' | 'settings'>('users');
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [currentTicket, setCurrentTicket] = useState<any>(null);
 
@@ -33,6 +34,9 @@ export default function App() {
     setSelectedSeat(seatId);
     if (!user) {
       setIsAuthModalOpen(true);
+    } else if (isAdmin) {
+      alert('Admins are not allowed to book tickets. Please use the Admin Panel to manage matches.');
+      return;
     } else if (profile?.isBlocked) {
       alert('Your account has been blocked. Please contact support.');
     } else if (profile && !profile.isVerified && profile.role !== 'admin') {
@@ -69,6 +73,11 @@ export default function App() {
     if (selectedSeat && user) {
       handleSeatSelect(selectedSeat);
     }
+  };
+
+  const handleOpenAdmin = (tab?: 'users' | 'tickets' | 'matches' | 'seats' | 'settings') => {
+    if (tab) setAdminTab(tab);
+    setIsAdminPanelOpen(true);
   };
 
   return (
@@ -108,7 +117,7 @@ export default function App() {
                 
                 {isAdmin && (
                   <button 
-                    onClick={() => setIsAdminPanelOpen(true)}
+                    onClick={() => handleOpenAdmin('users')}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-full text-xs font-bold uppercase tracking-widest transition-all border border-orange-500/20"
                   >
                     <Shield size={14} />
@@ -156,7 +165,7 @@ export default function App() {
         onEnter={handleEnter} 
         isEntered={isEntered} 
         isAdmin={isAdmin}
-        onOpenAdmin={() => setIsAdminPanelOpen(true)}
+        onOpenAdmin={handleOpenAdmin}
       />
       
       <SeatSelector 
@@ -183,6 +192,7 @@ export default function App() {
           isOpen={isAdminPanelOpen} 
           onClose={() => setIsAdminPanelOpen(false)} 
           isAdmin={isAdmin}
+          initialTab={adminTab}
         />
 
         <UserDashboard 

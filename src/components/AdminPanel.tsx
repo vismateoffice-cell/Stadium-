@@ -12,12 +12,13 @@ interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
   isAdmin: boolean;
+  initialTab?: AdminTab;
 }
 
 type AdminTab = 'users' | 'tickets' | 'matches' | 'seats' | 'settings';
 
-export default function AdminPanel({ isOpen, onClose, isAdmin }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<AdminTab>('users');
+export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: AdminPanelProps) {
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab || 'users');
   const [searchQuery, setSearchQuery] = useState('');
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,10 @@ export default function AdminPanel({ isOpen, onClose, isAdmin }: AdminPanelProps
       loadData();
     }
   }, [isOpen, activeTab, isAdmin]);
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -61,6 +66,33 @@ export default function AdminPanel({ isOpen, onClose, isAdmin }: AdminPanelProps
       try {
         const [teamA, teamB] = title.split(' vs ');
         await adminService.addMatch({
+          title,
+          type,
+          price,
+          venue,
+          date: new Date(dateStr).toISOString(),
+          teams: { teamA: teamA || 'Team A', teamB: teamB || 'Team B' }
+        });
+        loadData();
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleEditMatch = async (match: any) => {
+    const title = prompt('Edit Match Title', match.title);
+    if (!title) return;
+    const type = prompt('Edit Match Type', match.type || 'T20');
+    const price = Number(prompt('Edit Price', match.price || '0'));
+    const venue = prompt('Edit Venue', match.venue || 'VPW Stadium, Mumbai');
+    const dateStr = prompt('Edit Date (YYYY-MM-DD)', match.date?.seconds ? new Date(match.date.seconds * 1000).toISOString().split('T')[0] : new Date(match.date).toISOString().split('T')[0]);
+    
+    if (title && venue && dateStr) {
+      setIsLoading(true);
+      try {
+        const [teamA, teamB] = title.split(' vs ');
+        await adminService.updateMatch(match.id, {
           title,
           type,
           price,
@@ -384,6 +416,14 @@ export default function AdminPanel({ isOpen, onClose, isAdmin }: AdminPanelProps
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => handleEditMatch(match)}
+                                disabled={isActionLoading === match.id}
+                                className="p-2 text-gray-600 hover:text-orange-500 transition-colors"
+                                title="Edit Match"
+                              >
+                                <Settings size={18} />
+                              </button>
                               <button 
                                 onClick={() => handleToggleLive(match.id, match.status)}
                                 disabled={isActionLoading === match.id}
