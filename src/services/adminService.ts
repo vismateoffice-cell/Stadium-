@@ -118,7 +118,7 @@ export const adminService = {
     const usersRef = collection(db, 'users');
     try {
       const snap = await getDocs(usersRef);
-      return snap.docs.map(doc => doc.data());
+      return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, 'users');
     }

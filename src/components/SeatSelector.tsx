@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Ticket, X, Check, Lock, ArrowLeft, Clock } from 'lucide-react';
+import { ticketService } from '../services/ticketService';
 
 interface SeatSelectorProps {
   onSelect: (seatId: string) => void;
   selectedSeat: string | null;
   isEntered: boolean;
+  matchId?: string;
 }
 
 interface Block {
@@ -34,11 +36,13 @@ const TIERS = [
   { name: 'General Stand', color: '#0d9488' },
 ];
 
-export default function SeatSelector({ onSelect, selectedSeat, isEntered }: SeatSelectorProps) {
+export default function SeatSelector({ onSelect, selectedSeat, isEntered, matchId }: SeatSelectorProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [activeTier, setActiveTier] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [occupiedSeats, setOccupiedSeats] = useState<string[]>([]);
+  const [isLoadingSeats, setIsLoadingSeats] = useState(false);
 
   useEffect(() => {
     if (isModalOpen && timeLeft > 0) {
@@ -46,6 +50,25 @@ export default function SeatSelector({ onSelect, selectedSeat, isEntered }: Seat
       return () => clearInterval(timer);
     }
   }, [isModalOpen, timeLeft]);
+
+  useEffect(() => {
+    if (isModalOpen && matchId) {
+      loadOccupiedSeats();
+    }
+  }, [isModalOpen, matchId]);
+
+  const loadOccupiedSeats = async () => {
+    if (!matchId) return;
+    setIsLoadingSeats(true);
+    try {
+      const occupied = await ticketService.getOccupiedSeats(matchId);
+      setOccupiedSeats(occupied || []);
+    } catch (error) {
+      console.error('Failed to load occupied seats:', error);
+    } finally {
+      setIsLoadingSeats(false);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -231,11 +254,18 @@ export default function SeatSelector({ onSelect, selectedSeat, isEntered }: Seat
                       </div>
 
                       <div className="grid grid-cols-12 gap-1 sm:gap-3">
-                        {Array.from({ length: 72 }).map((_, i) => {
+                        {isLoadingSeats ? (
+                          Array.from({ length: 72 }).map((_, i) => (
+                            <div 
+                              key={`skeleton-${i}`} 
+                              className="aspect-square rounded-md sm:rounded-xl bg-white/5 animate-pulse" 
+                            />
+                          ))
+                        ) : Array.from({ length: 72 }).map((_, i) => {
                           const row = String.fromCharCode(65 + Math.floor(i / 12));
                           const col = (i % 12) + 1;
                           const id = `${selectedBlock.id}-${row}${col}`;
-                          const isOccupied = Math.random() > 0.8;
+                          const isOccupied = occupiedSeats.includes(id);
                           const isSelected = selectedSeat === id;
 
                           return (
@@ -246,13 +276,17 @@ export default function SeatSelector({ onSelect, selectedSeat, isEntered }: Seat
                               className={`
                                 aspect-square rounded-md sm:rounded-xl transition-all relative group
                                 ${isSelected ? 'ring-2 sm:ring-4 ring-white' : ''}
-                                ${isOccupied ? 'bg-white/5 cursor-not-allowed' : ''}
+                                ${isOccupied ? 'bg-white/5 cursor-not-allowed opacity-40' : 'hover:scale-110 active:scale-95'}
                               `}
-                              style={{ backgroundColor: isOccupied ? undefined : isSelected ? 'white' : selectedBlock.color }}
+                              style={{ backgroundColor: isOccupied ? '#1e293b' : isSelected ? 'white' : selectedBlock.color }}
                             >
-                              <span className="absolute inset-0 flex items-center justify-center text-[6px] sm:text-[8px] font-black text-black opacity-0 group-hover:opacity-100 transition-opacity">
-                                {row}{col}
-                              </span>
+                              {isOccupied ? (
+                                <Lock size={8} className="text-gray-600 sm:w-3 sm:h-3 absolute inset-0 m-auto" />
+                              ) : (
+                                <span className="absolute inset-0 flex items-center justify-center text-[6px] sm:text-[8px] font-black text-black opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {row}{col}
+                                </span>
+                              )}
                             </button>
                           );
                         })}

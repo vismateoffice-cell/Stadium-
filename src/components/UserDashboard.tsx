@@ -140,14 +140,28 @@ export default function UserDashboard({ isOpen, onClose }: UserDashboardProps) {
                     </div>
 
                     {isLoading ? (
-                      <div className="flex flex-col items-center justify-center h-64">
-                        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-4" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">Syncing with Stadium...</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[...Array(2)].map((_, i) => (
+                          <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6 animate-pulse">
+                            <div className="flex justify-between items-center">
+                              <div className="w-24 h-4 bg-white/10 rounded" />
+                              <div className="w-16 h-6 bg-white/10 rounded-full" />
+                            </div>
+                            <div className="space-y-4">
+                              <div className="w-3/4 h-6 bg-white/10 rounded" />
+                              <div className="w-1/2 h-4 bg-white/10 rounded" />
+                            </div>
+                            <div className="pt-6 border-t border-white/5 flex justify-between items-center">
+                              <div className="w-20 h-3 bg-white/10 rounded" />
+                              <div className="w-16 h-3 bg-white/10 rounded" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : tickets.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {tickets.map((ticket) => (
-                          <div key={ticket.id} className="bg-white rounded-3xl overflow-hidden shadow-xl text-black flex flex-col">
+                        {tickets.map((ticket, idx) => (
+                          <div key={ticket.id || `ticket-${idx}`} className="bg-white rounded-3xl overflow-hidden shadow-xl text-black flex flex-col">
                             <div className="p-6 bg-black text-white flex justify-between items-center">
                               <div className="flex items-center gap-2">
                                 <Ticket size={16} className="text-orange-500" />

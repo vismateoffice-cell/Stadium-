@@ -345,15 +345,30 @@ export default function Landing({ onEnter, isEntered, isAdmin, onOpenAdmin }: La
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-6" />
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Syncing Match Data...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-[#111] border border-white/5 rounded-[2.5rem] p-8 space-y-8">
+                <div className="flex justify-between items-start">
+                  <div className="w-24 h-6 bg-white/5 rounded-full animate-pulse" />
+                  <div className="w-16 h-10 bg-white/5 rounded-xl animate-pulse" />
+                </div>
+                <div className="space-y-3">
+                  <div className="w-3/4 h-8 bg-white/5 rounded-lg animate-pulse" />
+                  <div className="w-1/2 h-8 bg-white/5 rounded-lg animate-pulse" />
+                </div>
+                <div className="space-y-4">
+                  <div className="w-full h-4 bg-white/5 rounded-md animate-pulse" />
+                  <div className="w-full h-4 bg-white/5 rounded-md animate-pulse" />
+                </div>
+                <div className="w-full h-14 bg-white/5 rounded-2xl animate-pulse" />
+              </div>
+            ))}
           </div>
         ) : filteredMatches.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredMatches.map((match, index) => (
               <motion.div
-                key={match.id}
+                key={match.id || `match-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

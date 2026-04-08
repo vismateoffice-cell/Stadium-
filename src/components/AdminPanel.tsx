@@ -334,14 +334,27 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
 
                 <div className="flex-1 overflow-y-auto p-8 pb-safe">
                   {isLoading ? (
-                    <div className="flex flex-col items-center justify-center h-64">
-                      <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-4" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">Syncing Command Center...</p>
+                    <div className="space-y-4">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center animate-pulse">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/10 rounded-xl" />
+                            <div className="space-y-2">
+                              <div className="w-32 h-4 bg-white/10 rounded" />
+                              <div className="w-48 h-3 bg-white/10 rounded" />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <div className="w-16 h-8 bg-white/10 rounded-full" />
+                            <div className="w-8 h-8 bg-white/10 rounded-full" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : filteredData.length > 0 ? (
                     <div className="space-y-4">
-                      {activeTab === 'users' && filteredData.map((user) => (
-                        <div key={user.uid} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center hover:bg-white/10 transition-all group">
+                      {activeTab === 'users' && filteredData.map((user, idx) => (
+                        <div key={user.uid || `user-${idx}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center hover:bg-white/10 transition-all group">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
                               {user.photoURL ? (
@@ -374,8 +387,8 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
                         </div>
                       ))}
 
-                      {activeTab === 'tickets' && filteredData.map((ticket) => (
-                        <div key={ticket.id} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center hover:bg-white/10 transition-all group">
+                      {activeTab === 'tickets' && filteredData.map((ticket, idx) => (
+                        <div key={ticket.id || `ticket-${idx}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center hover:bg-white/10 transition-all group">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center font-black text-lg italic text-orange-500">T</div>
                             <div>
@@ -400,8 +413,8 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
                         </div>
                       ))}
 
-                      {activeTab === 'matches' && filteredData.map((match) => (
-                        <div key={match.id} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center hover:bg-white/10 transition-all group">
+                      {activeTab === 'matches' && filteredData.map((match, idx) => (
+                        <div key={match.id || `match-${idx}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 flex justify-between items-center hover:bg-white/10 transition-all group">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center font-black text-lg italic text-blue-500">M</div>
                             <div>
@@ -495,8 +508,8 @@ export default function AdminPanel({ isOpen, onClose, isAdmin, initialTab }: Adm
                             <h4 className="text-sm font-black uppercase tracking-widest text-white mb-4">Currently Blocked Seats</h4>
                             {filteredData.length > 0 ? (
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {filteredData.map((seat) => (
-                                  <div key={seat.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-white/10 transition-all">
+                                {filteredData.map((seat, idx) => (
+                                  <div key={seat.id || `seat-${idx}`} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex justify-between items-center hover:bg-white/10 transition-all">
                                     <div className="flex items-center gap-3">
                                       <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500">
                                         <Ban size={14} />

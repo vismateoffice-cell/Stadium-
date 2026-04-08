@@ -181,6 +181,7 @@ export default function App() {
           isEntered={isEntered} 
           selectedSeat={selectedSeat} 
           onSelect={handleSeatSelect} 
+          matchId={selectedMatch?.id}
         />
       )}
 

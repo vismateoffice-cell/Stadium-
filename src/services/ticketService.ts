@@ -78,6 +78,42 @@ export const ticketService = {
     }
   },
 
+  async getOccupiedSeats(matchId: string) {
+    const ticketsRef = collection(db, 'tickets');
+    const locksRef = collection(db, 'seatLocks');
+    
+    const ticketsQuery = query(ticketsRef, where('matchId', '==', matchId));
+    
+    try {
+      const [ticketsSnap, locksSnap] = await Promise.all([
+        getDocs(ticketsQuery),
+        getDocs(locksRef)
+      ]);
+      
+      const occupied = new Set<string>();
+      
+      ticketsSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.seatId) occupied.add(data.seatId);
+      });
+      
+      locksSnap.docs.forEach(doc => {
+        const data = doc.data();
+        // Include both admin blocks and active user locks
+        if (data.userId === 'ADMIN_BLOCKED') {
+          occupied.add(data.seatId);
+        } else if (data.expiresAt && data.expiresAt.toMillis() > Date.now()) {
+          occupied.add(data.seatId);
+        }
+      });
+      
+      return Array.from(occupied);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'occupiedSeats');
+      return [];
+    }
+  },
+
   async getMatches() {
     const matchesRef = collection(db, 'matches');
     try {
