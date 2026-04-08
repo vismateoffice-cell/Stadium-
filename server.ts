@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, query, where, updateDoc, doc } from 'firebase/firestore';
+import { initializeFirestore, collection, onSnapshot, query, where, updateDoc, doc } from 'firebase/firestore';
 import fs from 'fs';
 
 dotenv.config();
@@ -16,7 +16,11 @@ const __dirname = path.dirname(__filename);
 // Load Firebase Config
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Use experimentalForceLongPolling to prevent gRPC stream timeouts in Node environments
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+}, firebaseConfig.firestoreDatabaseId);
 
 const resend = new Resend('re_ap1QB3AB_3MA9XyyK5yknjJLt99yJJ9fW');
 

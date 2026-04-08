@@ -43,7 +43,11 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
       await loginWithEmail(email, password);
       onLogin();
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Email/Password login is not enabled in your Firebase Console. Go to Authentication > Sign-in method to enable it.');
+      } else {
+        setError(err.message || 'Login failed');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +61,11 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
       await signUpWithEmail(email, password, name);
       setView('otp'); // Reusing 'otp' view name for the verification message
     } catch (err: any) {
-      setError(err.message || 'Sign up failed');
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Email/Password sign-up is not enabled in your Firebase Console. Go to Authentication > Sign-in method to enable it.');
+      } else {
+        setError(err.message || 'Sign up failed');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -82,8 +90,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }: AuthModalProps) 
     setError(null);
     try {
       await resetPassword(email);
-      setError('Password reset email sent!');
-      setTimeout(() => setView('login'), 3000);
+      setError('Reset link sent! Check your inbox (and spam). If the link says "already used", try opening it in an Incognito window.');
+      setTimeout(() => setView('login'), 6000);
     } catch (err: any) {
       setError(err.message || 'Reset failed');
     } finally {
